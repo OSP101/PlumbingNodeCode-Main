@@ -1,3 +1,4 @@
+
 #include <ArduinoJson.h>
 #include <WiFi.h>
 #include <PubSubClient.h>
@@ -12,7 +13,7 @@ StaticJsonDocument<500> doc;
 #define mqtt_user "project"
 #define mqtt_password "123456788"
 
-String id = "15";
+String id = "10";
 String topicControl = "tabwater/device/" + id + "/control";
 String topicStatus = "tabwater/device/" + id + "/alive";
 String topicData = "tabwater/device/" + id + "/data";
@@ -26,24 +27,10 @@ PubSubClient client(espClient);
 
 
 // PinMode input sensor
-int before = 32;  // ก่อนกรอง
-int after = 33;   // หลังกรอง
-int flow = 35;    // ปริมาณ
-
-float ntu_before;
-float ntu_after;
-float flow_data;
-
-#define FLOW_PIN 35
-#define FLOW_FACTOR (1.0 / 7.5)
-
-unsigned long volume = 0;
-unsigned long prevTime = 0;
-uint32_t pulse_count = 0;
-
-void ICACHE_RAM_ATTR on_trigger_handle() {
-  pulse_count++;
-}
+int untreated_water_day = 33;    //น้ำดิบกลางวัน
+int untreated_water_night = 32;  //น้ำดิบกลางคืน
+int tower_water_day = 35;        //หอสูงกลางวัน
+int tower_water_night = 34;      //หอสูงกลางคืน
 
 
 
@@ -57,11 +44,10 @@ void setup() {
 
   pinMode(BUILTIN_LED, OUTPUT);
   pinMode(14, OUTPUT);
-  pinMode(before, INPUT);
-  pinMode(after, INPUT);
-  pinMode(flow, INPUT);
-    pinMode(FLOW_PIN, INPUT);
-  attachInterrupt(digitalPinToInterrupt(FLOW_PIN), on_trigger_handle, RISING);
+  pinMode(untreated_water_day, INPUT);
+  pinMode(untreated_water_night, INPUT);
+  pinMode(tower_water_day, INPUT);
+  pinMode(tower_water_night, INPUT);
   ticker.attach(0.8, tick);
 
   WiFi.config(INADDR_NONE, INADDR_NONE, INADDR_NONE, INADDR_NONE);
@@ -113,30 +99,23 @@ void loop() {
   }
   client.loop();
 
-  int sensorValue_before = analogRead(before);
-  float voltage_before = sensorValue_before * (4.5 / 1024.0);
-  ntu_before = map(voltage_before, 0, 10, 12, 0);
+  int untreated_water_day_reading = digitalRead(untreated_water_day);
+  String untreated_water_day_readingAsString = String(untreated_water_day_reading);
 
-  int sensorValue_after = analogRead(after);
-  float voltage_after = sensorValue_after * (4.5 / 1024.0);
-  ntu_after = map(voltage_after, 0, 10, 12, 0);
+  int untreated_water_nigth_reading = digitalRead(untreated_water_night);
+  String untreated_water_nigth_readingAsString = String(untreated_water_nigth_reading);
 
-    if ((millis() - prevTime) >= 1000) {
-    uint32_t end_pulse_count = pulse_count;
-    float flow = end_pulse_count * FLOW_FACTOR;  // 7.5 Hz = 1 L/min
-    unsigned int flowMilliLitres = (flow / 60) * 1000;
-    volume += flowMilliLitres;
 
-    Serial.printf("Flow = %.02f L/min\n", flow);
-    Serial.printf("Volume = %.02f ml\n", volume);
-    doc["flowRate"] = String(flow);
+  int tower_water_day_reading = digitalRead(tower_water_day);
+  String tower_water_day_readingAsString = String(tower_water_day_reading);
 
-    pulse_count = 0;  // Reset pulse count for the next measurement
-    prevTime = millis();
-  }
+  int tower_water_nigth_reading = digitalRead(tower_water_night);
+  String tower_water_nigth_readingAsString = String(tower_water_nigth_reading);
 
-  doc["ntu_before"] = ntu_before;
-  doc["ntu_after"] = ntu_after;
+  doc["untreated_water_day"] = untreated_water_day_readingAsString;
+  doc["untreated_water_nigth"] = untreated_water_nigth_readingAsString;
+  doc["tower_water_nigth"] = tower_water_nigth_readingAsString;
+  doc["tower_water_day"] = tower_water_day_readingAsString;
 
   char buffer[256];
   size_t n = serializeJson(doc, buffer);

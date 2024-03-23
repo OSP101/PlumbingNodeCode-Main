@@ -3,7 +3,7 @@
 #include <WiFi.h>
 #include <PubSubClient.h>
 
-const char* ssid = "IT_NW12";
+const char* ssid = "IT_NW12_2";
 const char* password = "123456788";
 
 #define mqtt_server "192.168.31.10"
@@ -11,7 +11,7 @@ const char* password = "123456788";
 #define mqtt_user "project"
 #define mqtt_password "123456788"
 
-String id = "11";
+String id = "10";
 String topicControl = "tabwater/device/" + id + "/control";
 String topicStatus = "tabwater/device/" + id + "/alive";
 String topicData = "tabwater/device/" + id + "/data";
@@ -22,6 +22,9 @@ Ticker ticker;
 
 WiFiClient espClient;
 PubSubClient client(espClient);
+
+String count1 = "0";
+String count2 = "0";
 
 
 void tick() {
@@ -89,7 +92,16 @@ void loop() {
 int reading = digitalRead(15);
 String readingAsString = String(reading);
 Serial.print(readingAsString);
+if(readingAsString == "1" && count1 == "0"){
 client.publish(topicData.c_str(), readingAsString.c_str());
+count1 = "1";
+count2 = "0";
+}else if(readingAsString == "0" && count2 == "0"){
+client.publish(topicData.c_str(), readingAsString.c_str());
+count1 = "0";
+count2 = "1";
+
+}
 
   delay(1000);
 
