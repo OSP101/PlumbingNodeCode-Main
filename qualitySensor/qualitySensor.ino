@@ -114,12 +114,12 @@ void loop() {
   client.loop();
 
   int sensorValue_before = analogRead(before);
-  float voltage_before = sensorValue_before * (4.5 / 1024.0);
-  ntu_before = map(voltage_before, 0, 10, 12, 0);
+  float voltage_before = sensorValue_before * (5.0 / 1024.0);
+  ntu_before = -1120.4 * voltage_before * voltage_before + 5742.3 * voltage_before - 4352.9;
 
   int sensorValue_after = analogRead(after);
-  float voltage_after = sensorValue_after * (4.5 / 1024.0);
-  ntu_after = map(voltage_after, 0, 10, 12, 0);
+  float voltage_after = sensorValue_after * (5.0 / 1024.0);
+  ntu_after = -1120.4 * voltage_after * voltage_after + 5742.3 * voltage_after - 4352.9;
 
     if ((millis() - prevTime) >= 1000) {
     uint32_t end_pulse_count = pulse_count;
